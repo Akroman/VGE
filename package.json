@@ -1,0 +1,19 @@
+{
+    "name": "triangulace-polygonu",
+    "version": "1.0.0",
+    "author": "Matěj Hlávka",
+    "dependencies": {
+        "dat.gui": "^0.7.7",
+        "light-server": "^2.9.1",
+        "pixi.js": "^5.3.12"
+    },
+    "devDependencies": {
+        "jsdoc": "^3.6.6",
+        "webpack": "^5.28.0",
+        "webpack-cli": "^4.6.0"
+    },
+    "scripts": {
+        "build": "webpack",
+        "start": "light-server -s ./dist"
+    }
+}
