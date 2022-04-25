@@ -1,5 +1,7 @@
 import * as PIXI from 'pixi.js';
-import Polygon from "./Polygon";
+import Polygon from './Polygon';
+import Point from './Point';
+import Triangulator from "./Triangulator";
 
 
 /**
@@ -11,27 +13,32 @@ export default class GraphicsManager {
         this.POLYGON_END_THRESHOLD = 10;
         this.LINE_WIDTH = 1.5;
         this.LINE_COLOR = 0xffffff;
+        this.TRIANGULATION_COLOR = 0xff0000;
 
         this.initLineDrawing();
+        this.triangulator = new Triangulator(new Polygon());
 
         // Graphics
         this.lineGraphics = new PIXI.Graphics();
         this.tempLineGraphics = new PIXI.Graphics();
         this.polygonGraphics = new PIXI.Graphics();
+        this.triangulationGraphics = new PIXI.Graphics();
 
         this.clearDrawing();
     }
 
 
     /**
+     * Get array of all graphic objects
      * @returns {PIXI.Graphics[]}
      */
     get graphics() {
-        return [this.lineGraphics, this.tempLineGraphics, this.polygonGraphics];
+        return [this.lineGraphics, this.tempLineGraphics, this.polygonGraphics, this.triangulationGraphics];
     }
 
 
     /**
+     * Initialize variables for line drawing
      * @returns {GraphicsManager}
      */
     initLineDrawing() {
@@ -39,8 +46,8 @@ export default class GraphicsManager {
         this.drawingStarted = false;
 
         // Points
-        this.fromPoint = new PIXI.Point(0, 0);
-        this.currPoint = new PIXI.Point(0, 0);
+        this.fromPoint = new Point(0, 0);
+        this.currPoint = new Point(0, 0);
         this.points = [];
 
         return this;
@@ -48,6 +55,7 @@ export default class GraphicsManager {
 
 
     /**
+     * Clear all drawn objects and reset line styles
      * @returns {GraphicsManager}
      */
     clearDrawing() {
@@ -55,6 +63,7 @@ export default class GraphicsManager {
             graphic.clear();
             graphic.lineStyle(this.LINE_WIDTH, this.LINE_COLOR);
         });
+        this.triangulationGraphics.lineStyle(this.LINE_WIDTH, this.TRIANGULATION_COLOR);
 
         return this;
     }
@@ -62,7 +71,7 @@ export default class GraphicsManager {
 
     /**
      * Starts drawing of a new polygon
-     * @param {PIXI.Point} pointFrom
+     * @param {Point} pointFrom
      */
     startLineDrawing(pointFrom) {
         this.fromPoint = pointFrom.clone();
@@ -73,20 +82,20 @@ export default class GraphicsManager {
 
 
     /**
-     * Finishes drawing and returns drawn polygon
+     * Finishes drawing, draws the polygon and sets drawn polygon to the triangulator
      * @returns {Polygon}
      */
     endLineDrawing() {
-        const polygon = new Polygon(this.points);
+        const polygon = new Polygon(this.points.slice(0, this.points.length - 1));
+        this.clearDrawing().polygonGraphics.drawPolygon(polygon);
+        this.triangulator.setPolygon(polygon);
         this.initLineDrawing();
-
-        return polygon;
     }
 
 
     /**
      * Draws a permanent line between last point and a given point
-     * @param {PIXI.Point} pointTo
+     * @param {Point} pointTo
      */
     drawLine(pointTo) {
         const endPoint = this.checkPolygonEndPoint(pointTo);
@@ -102,7 +111,7 @@ export default class GraphicsManager {
     /**
      * Draws a line from the last point to a given point
      * Used for drawing line between last point and current mouse position (graphics gets cleared everytime)
-     * @param {PIXI.Point} pointTo
+     * @param {Point} pointTo
      */
     drawTemporaryLine(pointTo) {
         const endPoint = this.checkPolygonEndPoint(pointTo);
@@ -117,7 +126,7 @@ export default class GraphicsManager {
 
     /**
      * Checks if given point is in threshold area of starting point
-     * @param {PIXI.Point} pointTo
+     * @param {Point} pointTo
      */
     checkPolygonEndThreshold(pointTo) {
         return Math.abs(pointTo.x - this.fromPoint.x) <= this.POLYGON_END_THRESHOLD
@@ -127,28 +136,25 @@ export default class GraphicsManager {
 
     /**
      * Returns the starting point if pointTo is in threshold to be the ending point, else returns pointTo
-     * @param {PIXI.Point} pointTo
+     * @param {Point} pointTo
      */
     checkPolygonEndPoint(pointTo) {
-        return this.checkPolygonEndThreshold(pointTo)
-            ? this.fromPoint
-            : pointTo;
+        return this.checkPolygonEndThreshold(pointTo) ? this.fromPoint : pointTo;
     }
 
 
     /**
-     * @param {Polygon} polygon
+     * Run triangulation algorithm and then draw lines splitting the polygon into triangles
      */
-    drawPolygon(polygon) {
-        this.polygonGraphics.drawPolygon(polygon);
-    }
+    drawTriangulation() {
+        this.triangulator.earClipping();
 
+        this.triangulationGraphics.clear();
+        this.triangulationGraphics.lineStyle(this.LINE_WIDTH, this.TRIANGULATION_COLOR);
 
-    /**
-     * TODO: Triangulate polygon and then draw lines inside the polygon representing the triangulation
-     * @param {Polygon} polygon
-     */
-    drawTriangulation(polygon) {
-        polygon.triangulate()
+        this.triangulator.lines.forEach((line) => {
+            this.triangulationGraphics.moveTo(line.from.x, line.from.y);
+            this.triangulationGraphics.lineTo(line.to.x, line.to.y);
+        });
     }
 }

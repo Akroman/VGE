@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "author": "Matěj Hlávka",
     "dependencies": {
+        "collections": "^5.1.13",
         "dat.gui": "^0.7.7",
         "light-server": "^2.9.1",
         "pixi.js": "^5.3.12"

@@ -1,4 +1,4 @@
-import App from "./App";
+import App from './App';
 
 
 // Create instance of App, initialize it and catch any exception that could occur during initialization

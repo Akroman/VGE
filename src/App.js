@@ -1,7 +1,8 @@
 import * as PIXI from 'pixi.js';
 import * as dat from 'dat.gui';
-import GraphicsManager from "./GraphicsManager";
-import Polygon from "./Polygon";
+import GraphicsManager from './GraphicsManager';
+import Polygon from './Polygon';
+import Point from './Point';
 
 
 /**
@@ -17,8 +18,6 @@ export default class App {
 
         this.interactManager = new PIXI.InteractionManager(this.pixiApp.renderer);
         this.gui = new dat.GUI();
-
-        this.polygon = new Polygon();
     }
 
 
@@ -28,14 +27,13 @@ export default class App {
      */
     initInteraction() {
         this.interactManager.on('pointerdown', (event) => {
-            const pointTo = event.data.global;
+            const pointTo = new Point(event.data.global.x, event.data.global.y);
             if (!this.graphicsManager.drawingStarted) {
                 this.graphicsManager.startLineDrawing(pointTo);
             } else {
                 this.graphicsManager.drawLine(pointTo);
                 if (this.graphicsManager.checkPolygonEndThreshold(pointTo)) {
-                    this.polygon = this.graphicsManager.endLineDrawing();
-                    this.graphicsManager.clearDrawing().drawPolygon(this.polygon);
+                    this.graphicsManager.endLineDrawing();
                 }
             }
         });
@@ -60,7 +58,7 @@ export default class App {
                 this.graphicsManager.clearDrawing().initLineDrawing();
             },
             Triangulate: () => {
-                this.graphicsManager.drawTriangulation(this.polygon);
+                this.graphicsManager.drawTriangulation();
             }
         };
 
