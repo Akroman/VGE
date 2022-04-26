@@ -10,7 +10,10 @@ import Point from './Point';
  */
 export default class App {
     constructor() {
-        this.pixiApp = new PIXI.Application({resizeTo: window});
+        this.pixiApp = new PIXI.Application({
+            resizeTo: window,
+            backgroundColor: 0x000000
+        });
         document.body.appendChild(this.pixiApp.view);
 
         this.graphicsManager = new GraphicsManager();
@@ -28,7 +31,7 @@ export default class App {
     initInteraction() {
         this.interactManager.on('pointerdown', (event) => {
             const pointTo = new Point(event.data.global.x, event.data.global.y);
-            if (!this.graphicsManager.drawingStarted) {
+            if (!this.graphicsManager.lineDrawingStarted) {
                 this.graphicsManager.startLineDrawing(pointTo);
             } else {
                 this.graphicsManager.drawLine(pointTo);
@@ -39,7 +42,7 @@ export default class App {
         });
 
         this.interactManager.on('pointermove', (event) => {
-            if (this.graphicsManager.drawingStarted) {
+            if (this.graphicsManager.lineDrawingStarted) {
                 this.graphicsManager.drawTemporaryLine(event.data.global);
             }
         });
@@ -53,19 +56,39 @@ export default class App {
      * @returns {App}
      */
     initGui() {
-        const polygonObj = {
+        this.polygonObj = {
             Delete: () => {
-                this.graphicsManager.clearDrawing().initLineDrawing();
+                this.graphicsManager.clearDrawing().initLineDrawing().initTriangulation();
             },
             Triangulate: () => {
-                this.graphicsManager.drawTriangulation();
-            }
+                this.graphicsManager.triangulate();
+            },
+            Speed: 1
         };
 
         const polygonFolder = this.gui.addFolder('Polygon');
-        polygonFolder.add(polygonObj, 'Delete');
-        polygonFolder.add(polygonObj, 'Triangulate');
+        const triangulationFolder = polygonFolder.addFolder('Triangulation');
+
+        polygonFolder.add(this.polygonObj, 'Delete');
+        triangulationFolder.add(this.polygonObj, 'Triangulate');
+        triangulationFolder.add(this.polygonObj, 'Speed', 0, 5);
+
         polygonFolder.open();
+        triangulationFolder.open();
+
+        return this;
+    }
+
+
+    /**
+     * Add handler to ticker for animating triangulation
+     */
+    run() {
+        this.pixiApp.ticker.add((delta) => {
+            if (this.graphicsManager.triangulationInProgress) {
+                this.graphicsManager.animateTriangulation(delta, this.polygonObj.Speed);
+            }
+        });
 
         return this;
     }

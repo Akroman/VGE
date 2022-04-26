@@ -1,7 +1,7 @@
 import * as PIXI from 'pixi.js';
 import Polygon from './Polygon';
 import Point from './Point';
-import Triangulator from "./Triangulator";
+import Triangulator from './Triangulator';
 
 
 /**
@@ -11,12 +11,23 @@ export default class GraphicsManager {
     constructor() {
         // Constants
         this.POLYGON_END_THRESHOLD = 10;
-        this.LINE_WIDTH = 1.5;
+        this.POLYGON_FILL_COLOR = 0x444444;
+
+        this.LINE_WIDTH = 2;
         this.LINE_COLOR = 0xffffff;
-        this.TRIANGULATION_COLOR = 0xff0000;
+
+        this.TRIANGULATION_INITIAL_LINE_DISTANCE = 1;
+        this.TRIANGULATION_LINE_END_THRESHOLD = 2;
+        this.TRIANGULATION_LINE_COLOR = 0xff0000;
+        this.TRIANGULATION_TRIANGLE_FILL_COLOR = 0x83b87d;
+        this.TRIANGULATION_EAR_FILL_COLOR = 0xfa9052;
+        this.TRIANGULATION_LINE_ENDS_FILL_COLOR = 0xa2a1ff;
+        this.TRIANGULATION_LINE_CIRCLE_RADIUS = 8;
 
         this.initLineDrawing();
+
         this.triangulator = new Triangulator(new Polygon());
+        this.initTriangulation();
 
         // Graphics
         this.lineGraphics = new PIXI.Graphics();
@@ -43,7 +54,7 @@ export default class GraphicsManager {
      */
     initLineDrawing() {
         // Indicates that drawing is in progress
-        this.drawingStarted = false;
+        this.lineDrawingStarted = false;
 
         // Points
         this.fromPoint = new Point(0, 0);
@@ -59,11 +70,9 @@ export default class GraphicsManager {
      * @returns {GraphicsManager}
      */
     clearDrawing() {
-        this.graphics.forEach((graphic) => {
-            graphic.clear();
-            graphic.lineStyle(this.LINE_WIDTH, this.LINE_COLOR);
-        });
-        this.triangulationGraphics.lineStyle(this.LINE_WIDTH, this.TRIANGULATION_COLOR);
+        this.graphics.forEach((graphic) => graphic.clear().lineStyle(this.LINE_WIDTH, this.LINE_COLOR));
+        this.triangulationGraphics.lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR);
+        this.polygonGraphics.beginFill(this.POLYGON_FILL_COLOR);
 
         return this;
     }
@@ -77,18 +86,17 @@ export default class GraphicsManager {
         this.fromPoint = pointFrom.clone();
         this.currPoint = pointFrom.clone();
         this.points.push(pointFrom.clone());
-        this.drawingStarted = true;
+        this.lineDrawingStarted = true;
     }
 
 
     /**
      * Finishes drawing, draws the polygon and sets drawn polygon to the triangulator
-     * @returns {Polygon}
      */
     endLineDrawing() {
         const polygon = new Polygon(this.points.slice(0, this.points.length - 1));
         this.clearDrawing().polygonGraphics.drawPolygon(polygon);
-        this.triangulator.setPolygon(polygon);
+        this.triangulator.polygon = polygon;
         this.initLineDrawing();
     }
 
@@ -100,8 +108,12 @@ export default class GraphicsManager {
     drawLine(pointTo) {
         const endPoint = this.checkPolygonEndPoint(pointTo);
 
-        this.lineGraphics.moveTo(this.currPoint.x, this.currPoint.y);
-        this.lineGraphics.lineTo(endPoint.x, endPoint.y);
+        // Polygon has to have at least 2 points and only unique points
+        if ((endPoint.equals(this.fromPoint) && this.points.length <= 2) || this.points.some((point) => point.equals(pointTo))) {
+            return;
+        }
+
+        this.lineGraphics.moveTo(this.currPoint.x, this.currPoint.y).lineTo(endPoint.x, endPoint.y);
 
         this.points.push(endPoint.clone());
         this.currPoint = endPoint.clone();
@@ -115,12 +127,11 @@ export default class GraphicsManager {
      */
     drawTemporaryLine(pointTo) {
         const endPoint = this.checkPolygonEndPoint(pointTo);
-
-        this.tempLineGraphics.clear();
-        this.tempLineGraphics.lineStyle(this.LINE_WIDTH, this.LINE_COLOR);
-
-        this.tempLineGraphics.moveTo(this.currPoint.x, this.currPoint.y);
-        this.tempLineGraphics.lineTo(endPoint.x, endPoint.y);
+        this.tempLineGraphics
+            .clear()
+            .lineStyle(this.LINE_WIDTH, this.LINE_COLOR)
+            .moveTo(this.currPoint.x, this.currPoint.y)
+            .lineTo(endPoint.x, endPoint.y);
     }
 
 
@@ -129,8 +140,7 @@ export default class GraphicsManager {
      * @param {Point} pointTo
      */
     checkPolygonEndThreshold(pointTo) {
-        return Math.abs(pointTo.x - this.fromPoint.x) <= this.POLYGON_END_THRESHOLD
-            && Math.abs(pointTo.y - this.fromPoint.y) <= this.POLYGON_END_THRESHOLD;
+        return this.fromPoint.isPointInThreshold(pointTo, this.POLYGON_END_THRESHOLD);
     }
 
 
@@ -144,17 +154,93 @@ export default class GraphicsManager {
 
 
     /**
-     * Run triangulation algorithm and then draw lines splitting the polygon into triangles
+     * Initialize triangulation variables
      */
-    drawTriangulation() {
+    initTriangulation() {
+        this.triangulator.polygon = new Polygon();
+        this.triangulationInProgress = false;
+        this.currTriangle = null;
+        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+    }
+
+
+    /**
+     * Run triangulation algorithm and start triangulation animation
+     */
+    triangulate() {
         this.triangulator.earClipping();
+        this.triangulationInProgress = true;
+        this.currTriangle = this.triangulator.triangleToAnimate;
+        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+    }
 
+
+    /**
+     * Draw triangles that have already been animated by animateTriangulation
+     */
+    drawAnimatedTriangles() {
         this.triangulationGraphics.clear();
-        this.triangulationGraphics.lineStyle(this.LINE_WIDTH, this.TRIANGULATION_COLOR);
-
-        this.triangulator.lines.forEach((line) => {
-            this.triangulationGraphics.moveTo(line.from.x, line.from.y);
-            this.triangulationGraphics.lineTo(line.to.x, line.to.y);
+        this.triangulator.animatedtriangles.forEach((triangle) => {
+            this.triangulationGraphics
+                .lineStyle()
+                .beginFill(this.TRIANGULATION_TRIANGLE_FILL_COLOR)
+                .drawPolygon(triangle)
+                .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
+                .moveTo(triangle.from.x, triangle.from.y)
+                .lineTo(triangle.to.x, triangle.to.y);
         });
+    }
+
+
+    /**
+     * Draw the triangulation animation
+     * @param {number} delta
+     * @param {number} speed
+     */
+    animateTriangulation(delta, speed) {
+        this.drawAnimatedTriangles();
+
+        // Check if there are any triangles to animate
+        if (!this.triangulator.triangles.length) {
+            this.triangulationInProgress = false;
+            this.triangulator.addAnimatedTriangle(this.currTriangle);
+            this.drawAnimatedTriangles();
+            return;
+        }
+
+        const from = this.currTriangle.from,
+            ear = this.currTriangle.ear,
+            to = this.currTriangle.to;
+        let lineEnd = from.getPointInDirection(to, this.triangulationLineDistance);
+
+        // Update line distance
+        this.triangulationLineDistance += delta * speed;
+
+        // If currently animated triangle is nearing it's end, finish drawing it and get next triangle
+        if (to.isPointInThreshold(lineEnd, this.TRIANGULATION_LINE_END_THRESHOLD * speed)) {
+            lineEnd = to;
+            this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+            this.triangulator.addAnimatedTriangle(this.currTriangle);
+            this.currTriangle = this.triangulator.triangleToAnimate;
+        }
+
+        // Draw ear
+        this.triangulationGraphics
+            .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_EAR_FILL_COLOR)
+            .beginFill(this.TRIANGULATION_EAR_FILL_COLOR)
+            .drawCircle(ear.x, ear.y, this.TRIANGULATION_LINE_CIRCLE_RADIUS);
+
+        // Draw line ends
+        this.triangulationGraphics
+            .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_ENDS_FILL_COLOR)
+            .beginFill(this.TRIANGULATION_LINE_ENDS_FILL_COLOR)
+            .drawCircle(from.x, from.y, this.TRIANGULATION_LINE_CIRCLE_RADIUS)
+            .drawCircle(to.x, to.y, this.TRIANGULATION_LINE_CIRCLE_RADIUS);
+
+        // Draw currently animated line
+        this.triangulationGraphics
+            .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
+            .moveTo(from.x, from.y)
+            .lineTo(lineEnd.x, lineEnd.y);
     }
 }

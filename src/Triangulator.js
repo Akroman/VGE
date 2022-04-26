@@ -1,4 +1,5 @@
 import Utils from './Utils';
+import Triangle from './Triangle';
 
 
 /**
@@ -10,19 +11,26 @@ export default class Triangulator {
      */
     constructor(polygon) {
         this.polygon = polygon;
-        this.lines = [];
+        this.triangles = [];
+        this.animatedtriangles = [];
     }
 
 
     /**
-     * Set a polygon and reset generated triangles
-     * @param {Polygon} polygon
-     * @returns {Triangulator}
+     * Get next triangle to be animated
+     * @returns {Triangle}
      */
-    setPolygon(polygon) {
-        this.polygon = polygon;
-        this.lines = [];
-        return this;
+    get triangleToAnimate() {
+        return this.triangles.shift();
+    }
+
+
+    /**
+     * Add triangle that has already finished animation
+     * @param {Triangle} triangle
+     */
+    addAnimatedTriangle(triangle) {
+        this.animatedtriangles.push(triangle);
     }
 
 
@@ -31,9 +39,12 @@ export default class Triangulator {
      */
     earClipping() {
         const pointsCount = this.polygon.allPoints.length;
+        const origPolygon = this.polygon.clone();
+        this.triangles = [];
+        this.animatedtriangles = [];
         this.polygon.initEarClipping();
 
-        while (this.lines.length < pointsCount - 2) {
+        while (this.triangles.length < pointsCount - 2) {
             // Get next ear and it's neighbour points
             const ear = this.polygon.earPoints.shift();
             const earNode = this.polygon.getNodeFromPoint(ear);
@@ -52,10 +63,9 @@ export default class Triangulator {
                 .testNodeForEar(this.polygon.getNodeFromPoint(prevPoint))
                 .testNodeForEar(this.polygon.getNodeFromPoint(nextPoint));
 
-            this.lines.push({
-                from: prevPoint,
-                to: nextPoint
-            });
+            this.triangles.push(new Triangle(prevPoint, ear, nextPoint));
         }
+
+        this.polygon = origPolygon;
     }
 }

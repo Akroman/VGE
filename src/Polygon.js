@@ -17,6 +17,14 @@ export default class Polygon extends PIXI.Polygon {
 
 
     /**
+     * @returns {Polygon}
+     */
+    clone() {
+        return new Polygon(this.allPoints.toArray());
+    }
+
+
+    /**
      * Iterates over all polygon point nodes and fills all lists with appropriate points
      * @returns {Polygon}
      */

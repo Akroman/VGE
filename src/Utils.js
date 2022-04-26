@@ -1,6 +1,3 @@
-import Point from './Point';
-
-
 /**
  * Class with various helper methods
  */
@@ -12,17 +9,6 @@ export default class Utils {
      */
     static radiansToDegrees(radians) {
         return radians * (180 / Math.PI);
-    }
-
-
-    /**
-     * Find middle point between two points
-     * @param {Point} firstPoint
-     * @param {Point} secondPoint
-     * @returns {Point}
-     */
-    static getMiddlePoint(firstPoint, secondPoint) {
-        return new Point((firstPoint.x + secondPoint.x) / 2, (firstPoint.y + secondPoint.y) / 2);
     }
 
 

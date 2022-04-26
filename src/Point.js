@@ -36,11 +36,21 @@ export default class Point extends PIXI.Point {
 
 
     /**
+     * Multiply this point by a scalar (returns new point)
+     * @param {number} number
+     * @returns {Point}
+     */
+    multiplyScalar(number) {
+        return new Point(this.x * number, this.y * number);
+    }
+
+
+    /**
      * Normalize this point (returns a new point)
      * @returns {Point}
      */
     normalize() {
-        const magnitude = Math.sqrt(this.x * this.x + this.y * this.y);
+        const magnitude = Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2));
         return new Point(this.x / magnitude, this.y / magnitude);
     }
 
@@ -62,6 +72,38 @@ export default class Point extends PIXI.Point {
      */
     directionTo(point) {
         return point.sub(this).normalize();
+    }
+
+
+    /**
+     * Find point in direction specified by point and in given distance
+     * @param {Point} point
+     * @param {number} distance
+     * @returns {Point}
+     */
+    getPointInDirection(point, distance) {
+        return this.add(this.directionTo(point).multiplyScalar(distance));
+    }
+
+
+    /**
+     * Get point lying in the middle between this point and given point
+     * @param {Point} point
+     * @returns {Point}
+     */
+    getMiddlePoint(point) {
+        return new Point((this.x + point.x) / 2, (this.y + point.y) / 2);
+    }
+
+
+    /**
+     * Check if given point lies in threshold of this point
+     * @param {Point} point
+     * @param {number} threshold
+     * @returns {boolean}
+     */
+    isPointInThreshold(point, threshold) {
+        return Math.abs(point.x - this.x) <= threshold && Math.abs(point.y - this.y) <= threshold;
     }
 
 
@@ -91,8 +133,8 @@ export default class Point extends PIXI.Point {
      * @returns {boolean}
      */
     isConvex(prevPoint, nextPoint, polygon) {
-        const middlePoint = Utils.getMiddlePoint(prevPoint, nextPoint);
-        const checkPoint = this.add(this.directionTo(middlePoint));
+        const middlePoint = prevPoint.getMiddlePoint(nextPoint);
+        const checkPoint = this.getPointInDirection(middlePoint, 1);
         let angle = this.getAngle(prevPoint, nextPoint);
         angle = polygon.contains(checkPoint.x, checkPoint.y) ? angle : 360 - angle;
 
