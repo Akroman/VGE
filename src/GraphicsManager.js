@@ -185,8 +185,13 @@ export default class GraphicsManager {
         this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
     }
 
-    trinagulateMonotone() {
+    triangulateMonotone() {
         console.log('triangulate greedy monotone');
+
+        this.triangulator.greedyMonotoneTriangulate();
+        this.triangulationInProgress = true;
+        this.currTriangle = this.triangulator.triangleToAnimate;
+        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
 
     }
 
@@ -208,12 +213,6 @@ export default class GraphicsManager {
                 .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
                 .moveTo(triangle.from.x, triangle.from.y)
                 .lineTo(triangle.to.x, triangle.to.y)
-                .mouseout = function () {
-                    console.log('in');
-                }
-                .mouseover = function () {
-                    console.log('out');
-                }
         });
     }
 

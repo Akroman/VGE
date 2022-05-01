@@ -67,7 +67,7 @@ export default class App {
                 this.graphicsManager.triangulateConvex();
             },
             TriangulateMonotone: () => {
-                this.graphicsManager.triangulateMonotone()
+                this.graphicsManager.triangulateMonotone();
             },
             Speed: 1
         };

@@ -97,6 +97,166 @@ export default class Triangulator {
     }
 
     greedyMonotoneTriangulate() {
+        const pointsCount = this.polygon.allPoints.length;
+        const leftPoint = this.findMostLeftPoint();
 
+        this.triangles = [];
+        this.Q = [];
+        this.animatedtriangles = [];
+        this.usedPoints = [];
+        
+        var lastTop, lastBot;
+        var topPoint, botPoint, _;
+        var currentPoint;
+        var lastWasTop = true;
+
+        const leftNode = this.polygon.getNodeFromPoint(leftPoint);
+        [topPoint, botPoint] = Utils.getPreviousAndNextPoint(leftNode);
+
+        var topNode, botNode;
+        lastTop = leftPoint;
+        lastBot = botPoint;
+
+        //this.triangles.push(new Triangle(leftPoint, topPoint, botPoint));
+
+        this.Q.push(botPoint);
+        this.Q.push(leftPoint);
+        
+
+        var goingTop = false;
+
+        while(this.triangles.length < pointsCount - 2) {
+            lastWasTop = goingTop;
+
+            topNode = this.polygon.getNodeFromPoint(lastTop);
+            botNode = this.polygon.getNodeFromPoint(lastBot);
+
+            [topPoint, _] = Utils.getPreviousAndNextPoint(topNode);
+            [_, botPoint] = Utils.getPreviousAndNextPoint(botNode);
+
+            if (topPoint.x < botPoint.x) {
+                botPoint = lastBot;
+                goingTop = true;
+                currentPoint = topPoint;
+            }
+            else {
+                topPoint = lastTop;
+                goingTop = false;
+                currentPoint = botPoint;
+            }
+
+            if (this.usedPoints.length > pointsCount) {
+                console.log('error');
+                break;
+            }
+
+            console.log(this.triangles, this.Q, lastWasTop, goingTop, currentPoint);
+
+            // same chain
+            if (lastWasTop == goingTop) {
+                this.Q.push(currentPoint);
+                while (this.Q.length >= 3) {
+                    var last1 = this.Q.pop();
+                    var last2 = this.Q.pop();
+
+                    console.log(last2, last1, currentPoint, this.find_angle(last2, last1, currentPoint));
+
+                    if (this.find_angle(last2, last1, currentPoint) < 180) {
+                        this.triangles.push(new Triangle(last2, last1, currentPoint));
+                        this.Q.push(last2);
+                    }
+                    else {
+                        this.Q.push(last2);
+                        this.Q.push(last1);
+
+                        console.log('break same chain,', this.Q);
+                        break;
+                    }
+
+                    console.log('same chain,', this.Q);
+                }
+            }
+            // different chain
+            else {
+                while (this.Q.length >= 2) {
+                    var last1 = this.Q.pop();
+                    var last2 = this.Q.pop();
+                    
+                    this.triangles.push(new Triangle(last2, last1, currentPoint));
+
+                    this.Q.push(last2);
+                }
+
+                this.Q.push(currentPoint);
+
+                console.log('different chain,', this.Q);
+            }
+
+            console.log('triangles length', this.triangles.length);
+
+            this.usedPoints.push(currentPoint);
+            console.log(this.usedPoints.length);
+
+            lastTop = topPoint;
+            lastBot = botPoint;
+        }
+    }
+
+    findMostLeftPoint() {
+        var currentPoint = null;
+        
+        this.polygon.allPoints.forEach(point => {
+            console.log(point);
+
+            if (currentPoint === null || point.x < currentPoint.x) {
+                currentPoint = point;
+            }
+        });
+
+        return currentPoint;
+    }
+
+    isBelow(begin, end, testPoint) {
+        var dx, dy, mx, my, cross, below;
+
+        dx = begin.x - end.x;
+        dy = begin.y - end.y;
+        mx = testPoint.x - end.x;
+        my = testPoint.y - end.y;
+
+        cross = dx * my - dy * mx;
+        below = (cross > 0);
+
+        if (dy/dx < 0)
+            return !below;
+        else {
+            return below;
+        }
+    }
+
+    isAbove(begin, end, testPoint) {
+        return !this.isBelow(begin, end, testPoint);
+    }
+
+    /*
+    * Calculates the angle ABC (in radians) 
+    *
+    * A first point, ex: {x: 0, y: 0}
+    * C second point
+    * B center point
+    */
+    find_angle(p0, c, p1) {
+        var p0c = Math.sqrt(Math.pow(c.x-p0.x,2)+
+                            Math.pow(c.y-p0.y,2)); // p0->c (b)   
+        var p1c = Math.sqrt(Math.pow(c.x-p1.x,2)+
+                            Math.pow(c.y-p1.y,2)); // p1->c (a)
+        var p0p1 = Math.sqrt(Math.pow(p1.x-p0.x,2)+
+                             Math.pow(p1.y-p0.y,2)); // p0->p1 (c)
+
+        return this.toDegrees(Math.acos((p1c*p1c+p0c*p0c-p0p1*p0p1)/(2*p1c*p0c)));
+    }
+
+    toDegrees(radians) {
+        return 360 * radians / (2 * Math.PI)
     }
 }
