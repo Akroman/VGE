@@ -68,4 +68,35 @@ export default class Triangulator {
 
         this.polygon = origPolygon;
     }
+
+    convexTriangulate() {
+        const pointsCount = this.polygon.allPoints.length;
+        const origPolygon = this.polygon.clone();
+
+        this.triangles = [];
+        this.animatedtriangles = [];
+
+        const selectedPoint = origPolygon.allPoints.shift();
+        const selectedNode = this.polygon.getNodeFromPoint(selectedPoint);
+        
+        var secondPoint, z;
+        var [x, firstPoint] = Utils.getPreviousAndNextPoint(selectedNode);
+        var [y, secondPoint] = Utils.getPreviousAndNextPoint(this.polygon.getNodeFromPoint(firstPoint));
+
+
+        while(this.triangles.length < pointsCount - 2) {
+            console.log(selectedPoint, firstPoint, secondPoint);
+
+            this.triangles.push(new Triangle(selectedPoint, firstPoint, secondPoint));
+
+            firstPoint = secondPoint;
+            [z, secondPoint] = Utils.getPreviousAndNextPoint(this.polygon.getNodeFromPoint(secondPoint));
+        }
+
+        this.polygon = origPolygon;
+    }
+
+    greedyMonotoneTriangulate() {
+
+    }
 }

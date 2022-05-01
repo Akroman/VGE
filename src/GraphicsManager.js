@@ -168,10 +168,30 @@ export default class GraphicsManager {
      * Run triangulation algorithm and start triangulation animation
      */
     triangulate() {
+        console.log('triangulate ear clipping');
+
         this.triangulator.earClipping();
         this.triangulationInProgress = true;
         this.currTriangle = this.triangulator.triangleToAnimate;
         this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+    }
+
+    triangulateConvex() {
+        console.log('triangulate convex');
+
+        this.triangulator.convexTriangulate();
+        this.triangulationInProgress = true;
+        this.currTriangle = this.triangulator.triangleToAnimate;
+        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+    }
+
+    trinagulateMonotone() {
+        console.log('triangulate greedy monotone');
+
+    }
+
+    sweepline() {
+        console.log('trapezodiation using sweepline');
     }
 
 
@@ -187,7 +207,13 @@ export default class GraphicsManager {
                 .drawPolygon(triangle)
                 .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
                 .moveTo(triangle.from.x, triangle.from.y)
-                .lineTo(triangle.to.x, triangle.to.y);
+                .lineTo(triangle.to.x, triangle.to.y)
+                .mouseout = function () {
+                    console.log('in');
+                }
+                .mouseover = function () {
+                    console.log('out');
+                }
         });
     }
 

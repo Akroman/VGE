@@ -60,8 +60,14 @@ export default class App {
             Delete: () => {
                 this.graphicsManager.clearDrawing().initLineDrawing().initTriangulation();
             },
-            Triangulate: () => {
+            TriangulateEars: () => {
                 this.graphicsManager.triangulate();
+            },
+            TriangulateConvex: () => {
+                this.graphicsManager.triangulateConvex();
+            },
+            TriangulateMonotone: () => {
+                this.graphicsManager.triangulateMonotone()
             },
             Speed: 1
         };
@@ -70,8 +76,12 @@ export default class App {
         const triangulationFolder = polygonFolder.addFolder('Triangulation');
 
         polygonFolder.add(this.polygonObj, 'Delete');
-        triangulationFolder.add(this.polygonObj, 'Triangulate');
+
+        triangulationFolder.add(this.polygonObj, 'TriangulateEars');
+        triangulationFolder.add(this.polygonObj, 'TriangulateConvex');
+        triangulationFolder.add(this.polygonObj, 'TriangulateMonotone');
         triangulationFolder.add(this.polygonObj, 'Speed', 0, 5);
+
 
         polygonFolder.open();
         triangulationFolder.open();
