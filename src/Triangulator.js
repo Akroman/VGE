@@ -119,9 +119,8 @@ export default class Triangulator {
 
         //this.triangles.push(new Triangle(leftPoint, topPoint, botPoint));
 
-        this.Q.push(botPoint);
         this.Q.push(leftPoint);
-        
+        this.Q.push(botPoint);
 
         var goingTop = false;
 
@@ -214,28 +213,6 @@ export default class Triangulator {
         });
 
         return currentPoint;
-    }
-
-    isBelow(begin, end, testPoint) {
-        var dx, dy, mx, my, cross, below;
-
-        dx = begin.x - end.x;
-        dy = begin.y - end.y;
-        mx = testPoint.x - end.x;
-        my = testPoint.y - end.y;
-
-        cross = dx * my - dy * mx;
-        below = (cross > 0);
-
-        if (dy/dx < 0)
-            return !below;
-        else {
-            return below;
-        }
-    }
-
-    isAbove(begin, end, testPoint) {
-        return !this.isBelow(begin, end, testPoint);
     }
 
     /*
