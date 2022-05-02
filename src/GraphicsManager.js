@@ -258,7 +258,10 @@ export default class GraphicsManager {
             this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
             this.triangulator.addAnimatedTriangle(this.currTriangle);
             this.currTriangle = this.triangulator.triangleToAnimate;
-            this.currPointStack = this.triangulator.pointStack;
+
+            if (this.triangulator.stackSnapshots != null && this.triangulator.stackSnapshots.length) {
+                this.currPointStack = this.triangulator.pointStack;
+            }
         }
 
         // Draw ear
