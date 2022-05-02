@@ -122,7 +122,7 @@ export default class Triangulator {
 
         var prevTop = p2_p;
 
-        for(var i = 3; i < pointsCount; i++) {
+        for(var i = 2; i < pointsCount; i++) {
             var p_i = this.xSorted.shift();
             var p_i_p = this.topPath.shift();
 
@@ -142,7 +142,7 @@ export default class Triangulator {
 
                     if (p_i_p) {
                         // jdu vrchem
-                        if (this.isAbove(last3, last1, last2)) {
+                        if (this.isBelow(last3, last1, last2)) {
                             this.triangles.push(new Triangle(last1, last2, last3));
 
                             this.Q.push(last3);
@@ -158,8 +158,7 @@ export default class Triangulator {
                     }
                     else {
                         // jdu spodem
-
-                        if (this.isAbove(last3, last1, last2)) {
+                        if (!this.isBelow(last3, last1, last2)) {
                             this.triangles.push(new Triangle(last1, last2, last3));
                             this.Q.push(last3);
                             this.Q.push(last1);
@@ -187,7 +186,6 @@ export default class Triangulator {
                     
                     this.Q.unshift(last1);
                 }
-
                 this.Q.push(p_i);
             }
             console.log(this.triangles.length);
@@ -212,22 +210,20 @@ export default class Triangulator {
         return currentPoint;
     }
 
-    isBelow(begin, end, testPoint) {
-        var dx, dy, mx, my, cross, below;
+    isBelow(point1, point2, currPoint) {
+        var cross, below;
 
-        dx = begin.x - end.x;
-        dy = begin.y - end.y;
-        mx = testPoint.x - end.x;
-        my = testPoint.y - end.y;
+        var dxc = currPoint.x - point1.x;
+        var dyc = currPoint.y - point1.y;
 
-        cross = dx * my - dy * mx;
+        var dxl = point2.x - point1.x;
+        var dyl = point2.y - point1.y;
+
+        cross = dxc * dyl - dyc * dxl;
+        
         below = (cross > 0);
 
-        if (dy/dx < 0)
-            return !below;
-        else {
-            return below;
-        }
+        return below;
     }
 
     isAbove(begin, end, testPoint) {
@@ -356,14 +352,12 @@ export default class Triangulator {
 
             if(topPoint.x < botPoint.x) {
                 // jdu horni cestou
-
                 lastTop = topPoint;
                 this.topPath.push(true);
                 this.xSorted.push(topPoint);
             } 
             else {
                 // jdu dolni cestou
-
                 lastBot = botPoint;
                 this.topPath.push(false);
                 this.xSorted.push(botPoint);
