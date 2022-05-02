@@ -205,7 +205,7 @@ export default class GraphicsManager {
      */
     drawAnimatedTriangles() {
         this.triangulationGraphics.clear();
-        this.triangulator.animatedtriangles.reverse().forEach((triangle) => {
+        this.triangulator.animatedtriangles.forEach((triangle) => {
             this.triangulationGraphics
                 .lineStyle()
                 .beginFill(this.TRIANGULATION_TRIANGLE_FILL_COLOR)
