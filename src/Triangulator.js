@@ -147,6 +147,8 @@ export default class Triangulator {
 
                             this.Q.push(last3);
                             this.Q.push(last1);
+
+                            this.stackSnapshots.push(this.Q.slice());
                         }
                         else {
                             this.Q.push(last3);
@@ -160,8 +162,11 @@ export default class Triangulator {
                         // jdu spodem
                         if (!this.isBelow(last3, last1, last2)) {
                             this.triangles.push(new Triangle(last1, last2, last3));
+
                             this.Q.push(last3);
                             this.Q.push(last1);
+
+                            this.stackSnapshots.push(this.Q.slice());
                         }
                         else {
                             this.Q.push(last3);
@@ -182,15 +187,16 @@ export default class Triangulator {
                     var last2 = this.Q.shift();
                     var last1 = this.Q.shift();
 
-                    this.triangles.push(new Triangle(last1, p_i, last2));
-                    
+                    this.triangles.push(new Triangle(last1, last2, p_i));
                     this.Q.unshift(last1);
+
+                    this.stackSnapshots.push(this.Q.slice());
                 }
                 this.Q.push(p_i);
             }
             console.log(this.triangles.length);
 
-            this.stackSnapshots.push(this.Q.slice())
+            
         }
         console.log('Q', this.Q.length);
         console.log('Q history', this.stackSnapshots);
