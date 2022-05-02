@@ -111,10 +111,4 @@ export default class Polygon extends PIXI.Polygon {
 
         return node;
     }
-
-
-    // TODO: Implement algorithm to detect if polygon is simple
-    isSimple() {
-        return true;
-    }
 }

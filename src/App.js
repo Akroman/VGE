@@ -61,7 +61,7 @@ export default class App {
                 this.graphicsManager.clearDrawing().initLineDrawing().initTriangulation();
             },
             TriangulateEars: () => {
-                this.graphicsManager.triangulate();
+                this.graphicsManager.triangulateEarClipping();
             },
             TriangulateConvex: () => {
                 this.graphicsManager.triangulateConvex();
@@ -81,7 +81,6 @@ export default class App {
         triangulationFolder.add(this.polygonObj, 'TriangulateConvex');
         triangulationFolder.add(this.polygonObj, 'TriangulateMonotone');
         triangulationFolder.add(this.polygonObj, 'Speed', 0, 5);
-
 
         polygonFolder.open();
         triangulationFolder.open();

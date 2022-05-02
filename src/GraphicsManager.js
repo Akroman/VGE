@@ -160,43 +160,46 @@ export default class GraphicsManager {
         this.triangulator.polygon = new Polygon();
         this.triangulationInProgress = false;
         this.currTriangle = null;
+        this.currPointStack = [];
         this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
     }
 
 
     /**
-     * Run triangulation algorithm and start triangulation animation
+     * Initialize triangulation animation variables
      */
-    triangulate() {
-        console.log('triangulate ear clipping');
+    initTriangulationAnimation() {
+        this.triangulationInProgress = true;
+        this.currTriangle = this.triangulator.triangleToAnimate;
+        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+    }
 
+
+    /**
+     * Ear clipping triangulation
+     */
+    triangulateEarClipping() {
         this.triangulator.earClipping();
-        this.triangulationInProgress = true;
-        this.currTriangle = this.triangulator.triangleToAnimate;
-        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+        this.initTriangulationAnimation();
     }
 
+
+    /**
+     * Convex triangulation
+     */
     triangulateConvex() {
-        console.log('triangulate convex');
-
         this.triangulator.convexTriangulate();
-        this.triangulationInProgress = true;
-        this.currTriangle = this.triangulator.triangleToAnimate;
-        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
+        this.initTriangulationAnimation();
     }
 
+
+    /**
+     * Monotone triangulation
+     */
     triangulateMonotone() {
-        console.log('triangulate greedy monotone');
-
         this.triangulator.greedyMonotoneTriangulate();
-        this.triangulationInProgress = true;
-        this.currTriangle = this.triangulator.triangleToAnimate;
-        this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
-
-    }
-
-    sweepline() {
-        console.log('trapezodiation using sweepline');
+        this.initTriangulationAnimation();
+        this.currPointStack = this.triangulator.pointStack;
     }
 
 
@@ -205,7 +208,7 @@ export default class GraphicsManager {
      */
     drawAnimatedTriangles() {
         this.triangulationGraphics.clear();
-        this.triangulator.animatedtriangles.forEach((triangle) => {
+        this.triangulator.animatedTriangles.forEach((triangle) => {
             this.triangulationGraphics
                 .lineStyle()
                 .beginFill(this.TRIANGULATION_TRIANGLE_FILL_COLOR)
@@ -213,6 +216,13 @@ export default class GraphicsManager {
                 .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
                 .moveTo(triangle.from.x, triangle.from.y)
                 .lineTo(triangle.to.x, triangle.to.y)
+        });
+
+        this.currPointStack.forEach((point) => {
+            this.triangulationGraphics
+                .lineStyle(this.LINE_WIDTH, this.TRIANGULATION_LINE_COLOR)
+                .beginFill(this.TRIANGULATION_LINE_COLOR)
+                .drawCircle(point.x, point.y, this.TRIANGULATION_LINE_CIRCLE_RADIUS);
         });
     }
 
@@ -229,6 +239,7 @@ export default class GraphicsManager {
         if (!this.triangulator.triangles.length) {
             this.triangulationInProgress = false;
             this.triangulator.addAnimatedTriangle(this.currTriangle);
+            this.currPointStack = [];
             this.drawAnimatedTriangles();
             return;
         }
@@ -247,6 +258,7 @@ export default class GraphicsManager {
             this.triangulationLineDistance = this.TRIANGULATION_INITIAL_LINE_DISTANCE;
             this.triangulator.addAnimatedTriangle(this.currTriangle);
             this.currTriangle = this.triangulator.triangleToAnimate;
+            this.currPointStack = this.triangulator.pointStack;
         }
 
         // Draw ear
