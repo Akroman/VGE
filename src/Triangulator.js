@@ -109,6 +109,8 @@ export default class Triangulator {
         this.Q = [];
         this.stackPaths = [];
 
+        this.stackSnapshots = [];
+
         var p1 = this.xSorted.shift();
         var p1_p = this.topPath.shift();
 
@@ -120,7 +122,7 @@ export default class Triangulator {
 
         var prevTop = p2_p;
 
-        for(var i = 2; i < pointsCount; i++) {
+        for(var i = 3; i < pointsCount; i++) {
             var p_i = this.xSorted.shift();
             var p_i_p = this.topPath.shift();
 
@@ -189,7 +191,11 @@ export default class Triangulator {
                 this.Q.push(p_i);
             }
             console.log(this.triangles.length);
+
+            this.stackSnapshots.push(this.Q.slice())
         }
+        console.log('Q', this.Q.length);
+        console.log('Q history', this.stackSnapshots);
     }
 
     findMostLeftPoint() {
